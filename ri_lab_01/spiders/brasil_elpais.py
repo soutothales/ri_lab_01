@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 import scrapy
 import json
-# import scrapy_useragents
-# import scrapy-rotating-proxies
+
+import pdb
+from datetime import datetime
 
 from ri_lab_01.items import RiLab01Item
 from ri_lab_01.items import RiLab01CommentItem
@@ -33,9 +34,18 @@ class BrasilElpaisSpider(scrapy.Spider):
             #     'section'	String	Esportes, Saúde, Política, etc
             #     'text'	String	
             #     'url'
+
+            date = articulo__interior.css('time::attr(datetime)').get()
+            date = datetime.strptime(date, '%Y-%m-%dT%H:%M:%S')
+            date = datetime.strftime(dt,'%d/%m/%Y %H:%M:%S')
+
+
             yield {
-                'title': articulo__interior.xpath('string(.//h2)').get(),
+                'title': articulo__interior.xpath('string(.//h2)').get().encode('utf-8'),
+                'date': date              
             }
+
+            pdb.set_trace()
 
             next_page = response.css('li.paginacion-siguiente a::attr(href)').get()
             counter = 0
