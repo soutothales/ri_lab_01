@@ -20,83 +20,23 @@ class BrasilElpaisSpider(scrapy.Spider):
                 data = json.load(json_file)
         self.start_urls = list(data.values())
 
-    # Utilizei esta função auxiliar para minerar o texto do artículo
-    def get_text(self, page):
+    # Essa é uma variável de controle para gerar apenas 100 documentos
+    count = 0 
 
-        yield scrapy.Request(url='https:'+page, callback=self.parse)
+    def aux_parse(self, response):
+
+        for articulo__interior in response.css('div.articulo__interior'):
+            url = articulo__interior.css('h2.articulo-titulo a::attr(href)').get()
+            url = 'https:' + str(url)
+
+            yield response.follow(url, callback=self.new_parse)
+
 
 
     def parse(self, response):
 
-        ########## Meu código se encaixa aqui ###############
-
-
-        for articulo__interior in response.css('div.articulos__interior'):
-            # meta content="2019-04-01T14:48:12" itemprop="datePublished"
-            # 'title'	String	
-            # 'sub_title'	String	
-            # 'author'	String	
-            # 'date'	Datetime	dd/mm/yyyy hh:mi:ss
-            # 'section'	String	Esportes, Saúde, Política, etc
-            # 'text'	String	
-            # 'url'
-
+        yield response.follow(response.url, callback=self.aux_parse)
             
-
-            # Formatação para resgatar título
-            title = articulo__interior.xpath('string(.//h2)').get().encode('utf-8')
-
-            # Formatação para resgatar section
-            section = articulo__interior.css('h2 a::attr(href)').get().split('/')[-2]
-
-            # Formatação para resgatar author
-            author = articulo__interior.css('div.articulo-metadatos div.firma div.autor div.autor-texto span.autor-nombre a::text').get()
-            
-            # Formatação para o formato desejado de date
-            date = articulo__interior.css('time::attr(datetime)').get()
-            date = datetime.strptime(date, '%Y-%m-%dT%H:%M:%S')
-            date = datetime.strftime(date,'%d/%m/%Y %H:%M:%S')
-
-            # Formatação para resgatar sub titulo
-            sub_title = articulo__interior.css('p.articulo-entradilla::text').get()
-
-            # Formatação para resgatar o texto
-            # text
-
-            # Formatação para resgatar url
-            url = articulo__interior.css('h2 a::attr(href)').get().encode('utf-8')
-
-
-
-            # article_page = articulo__interior.css('h2 a::attr(href)').get()
-
-            # article_text = self.get_text(article_page)
-
-            
-            yield {
-                'title': title,
-                'sub_title': sub_title,
-                'author': author,
-                'date': date,
-                'section': section,
-                'url': url                  
-            }
-
-            # articulo__interior.css('h2 a::attr(href)').get()
-
-            pdb.set_trace()
-
-            # scrapy.Request(articulo__interior.css('h2 a::attr(href)').get(), callback=self.parse)
-
-            # next_page = response.css('li.paginacion-siguiente a::attr(href)').get()
-            # counter = 0
-            # if next_page is not None and counter < 3:
-            #     yield response.follow(next_page)
-
-
-
-        
-        ##################################################
 
         
         # page = response.url.split("/")[-2]
@@ -107,3 +47,57 @@ class BrasilElpaisSpider(scrapy.Spider):
         #
         #
         #
+
+
+   
+    # Função para fazer o parse das informações
+    def new_parse(self, response):
+
+        
+        for item in response.css('div.contenedor'):
+
+            # Formatação para resgatar título
+            title = str(item.css('h1.articulo-titulo::text').get().encode('utf-8'))
+
+            # Formatação para resgatar author
+            author = str(item.css('div.firma div.autor div.autor-texto span.autor-nombre a::text').get())
+            
+            # Formatação para o formato desejado de date
+            date = item.css('div.articulo-datos time::attr(datetime)').get()
+            date = date[:-6]
+            date = datetime.strptime(date, '%Y-%m-%dT%H:%M:%S')
+            date = datetime.strftime(date,'%d/%m/%Y %H:%M:%S')
+
+            # Formatação para resgatar sub titulo
+            sub_title = item.css('div.articulo-subtitulos h2.articulo-subtitulo::text').get()
+
+            # Formatação para resgatar texto
+            text = item.css('div.articulo__contenedor p::text').getall()
+            text = "".join(text)
+
+
+            # Formatação para resgatar url
+            url = response.request.url
+            
+
+            # Formatação para resgatar section
+            section = str(url.split("/")[-2])
+
+            # pdb.set_trace()
+
+            
+            yield {
+                'title': title,
+                'sub_title': sub_title,
+                'author': author,
+                'date': date,
+                'section': section,
+                'text': text,
+                'url': url                  
+            }
+                
+                
+        
+        
+
+            
