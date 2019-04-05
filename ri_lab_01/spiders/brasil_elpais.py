@@ -53,9 +53,14 @@ class BrasilElpaisSpider(scrapy.Spider):
 
             # Formatação para resgatar título
             title = str(item.css('h1.articulo-titulo::text').get().encode('utf-8'))
+            title = title.replace(',', '')
+            title = title.replace('\n', ' ')
 
             # Formatação para resgatar author
             author = str(item.css('div.firma div.autor div.autor-texto span.autor-nombre a::text').get())
+            author = author.replace(',', '')
+            author = author.replace('\n', '')
+            
             
             # Formatação para o formato desejado de date
             date = item.css('div.articulo-datos time::attr(datetime)').get()
@@ -65,10 +70,14 @@ class BrasilElpaisSpider(scrapy.Spider):
 
             # Formatação para resgatar sub titulo
             sub_title = item.css('div.articulo-subtitulos h2.articulo-subtitulo::text').get()
+            sub_title = sub_title.replace(',', '')
+            sub_title = sub_title.replace('\n', ' ')
 
             # Formatação para resgatar texto
-            text = item.css('div.articulo__contenedor p::text').getall()
+            text = item.css('div.articulo__contenedor p *::text').getall()
             text = "".join(text)
+            text = text.replace(',', '')
+            text = text.replace('\n', ' ')
 
 
             # Formatação para resgatar url
