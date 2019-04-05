@@ -20,32 +20,25 @@ class BrasilElpaisSpider(scrapy.Spider):
                 data = json.load(json_file)
         self.start_urls = list(data.values())
 
-    # Essa é uma variável de controle para gerar apenas 100 documentos
-    count = 0 
-
     def aux_parse(self, response):
 
         for articulo__interior in response.css('div.articulo__interior'):
             url = articulo__interior.css('h2.articulo-titulo a::attr(href)').get()
             url = 'https:' + str(url)
 
-            if (self.count != 100):
-                yield scrapy.Request(url, callback=self.new_parse)
-                self.count += 1            
-
+            yield response.follow(url, callback=self.new_parse)     
 
 
     def parse(self, response):
 
         yield response.follow(response.url, callback=self.aux_parse)
-            
 
         
-        # page = response.url.split("/")[-2]
-        # filename = 'quotes-page-%s.html' % page
-        # with open(filename, 'wb') as f:
-        #     f.write(response.body)
-        # self.log('Saved file %s' % filename)
+        page = response.url.split("/")[-2]
+        filename = 'quotes-page-%s.html' % page
+        with open(filename, 'wb') as f:
+            f.write(response.body)
+        self.log('Saved file %s' % filename)
         #
         #
         #
