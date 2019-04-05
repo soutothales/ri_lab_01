@@ -29,7 +29,9 @@ class BrasilElpaisSpider(scrapy.Spider):
             url = articulo__interior.css('h2.articulo-titulo a::attr(href)').get()
             url = 'https:' + str(url)
 
-            yield response.follow(url, callback=self.new_parse)
+            if (self.count != 100):
+                yield scrapy.Request(url, callback=self.new_parse)
+                self.count += 1            
 
 
 
